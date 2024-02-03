@@ -7,59 +7,85 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.slim.min.js" integrity="sha384-u7W7Pb2KtFqR8jLuO4zBlpHTzuZlqZWOlKq7B/v/SB4x47ssH5b8VoU6Nf5yaA93" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbVqJOEdI1l5TZBzKO6a2Rv6o8sDBUHFNkA6N7aE9A4lDI5QF5eBwGPuYU9U7yh" crossorigin="anonymous"></script>    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-7e3v6LzInBd5AaHgruNu0z7gKd7ZItYV1LcVfq9k2L92YL+4Pem+7e5x5nhF7zjI" crossorigin="anonymous" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark" style="margin-bottom: 50px">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <img src="static/logo.jpeg" alt="" width="30" height="24" class="d-inline-block align-text-top">
-                 CodeHelper Forum
-            </a>
-        </div>
-    </nav>
+<nav class="navbar navbar-dark bg-dark" style="margin-bottom: 50px">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <img src="static/logo.jpeg" alt="" width="30" height="24" class="d-inline-block align-text-top">
+            CodeHelper Forum
+        </a>
+        <!-- Добавляем иконку для открытия профиля -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <script>
+            $(document).ready(function() {
+                $('.navbar-toggler').click(function() {
+                    $('#navbarNav').toggleClass('show');
+                });
+            });
+        </script>
+    </div>
+    <!-- Добавляем div для размещения ссылок в навигационной панели -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <!-- Добавляем ссылку на профиль с иконкой пользователя -->
+            <li class="nav-item">
+                <a class="nav-link" href="/profile" style="color: black">
+                    <i class="fas fa-user"></i> Профиль
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
 
-    <div class="container">
+
+    <div id="main-content" class="container">
         <div class="row" style="margin: 25px">
             <div class="col-md-5">
-                <div class="card text-dark bg-info mb-3" style="width: 25rem; height: 15rem">
-
-                    <div class="card-body">
-                        <h5 class="card-title" style="align-content: center">Golang</h5>
+                    <div class="card text-dark bg-info mb-3" style="width: 25rem; height: 15rem">
+                        <div class="card-body">
+                            <h5 class="card-title" style="align-content: center"><a href="go.html">Golang</a></h5>
+                        </div>
                     </div>
-                </div>
             </div>
             <div class="col-md-2"></div>
             <div class="col-md-5">
-                <div class="card text-dark bg-light mb-3" style="width: 25rem; height: 15rem">
-
-                    <div class="card-body">
-                        <h5 class="card-title" style="align-content: center">Java</h5>
+                <a href="/java" style="text-decoration: none; color: inherit;">
+                    <div class="card text-dark bg-light mb-3" style="width: 25rem; height: 15rem">
+                        <div class="card-body">
+                            <h5 class="card-title" style="align-content: center">Java</h5>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
 
         <div class="row" style="margin: 25px">
             <div class="col-md-5">
-                <div class="card text-dark bg-warning mb-3" style="width: 25rem; height: 15rem">
-
-                    <div class="card-body">
-                        <h5 class="card-title" style="align-content: center">JavaScript</h5>
+                <a href="/javascript" style="text-decoration: none; color: inherit;">
+                    <div class="card text-dark bg-warning mb-3" style="width: 25rem; height: 15rem">
+                        <div class="card-body">
+                            <h5 class="card-title" style="align-content: center">JavaScript</h5>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-2"></div>
             <div class="col-md-5">
-                <div class="card text-white bg-dark mb-3" style="width: 25rem; height: 15rem">
-
-                    <div class="card-body">
-                        <h5 class="card-title" style="align-content: center">Python</h5>
+                <a href="/python" style="text-decoration: none; color: inherit;">
+                    <div class="card text-white bg-dark mb-3" style="width: 25rem; height: 15rem">
+                        <div class="card-body">
+                            <h5 class="card-title" style="align-content: center">Python</h5>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
-
     </div>
 
 

@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -23,6 +22,7 @@ var db *sql.DB
 
 type PageVariables struct {
 	Title string
+	User  UserProfile
 }
 
 type User struct {
@@ -43,6 +43,7 @@ func main() {
 	http.HandleFunc("/register", RegisterPage)
 	http.HandleFunc("/login", LoginPage)
 	http.HandleFunc("/admin", AdminPage)
+	http.HandleFunc("/profile", ProfilePage)
 
 	fmt.Println("Server is running on :8080...")
 	http.ListenAndServe(":8080", nil)
@@ -150,4 +151,37 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.Execute(w, nil)
+}
+
+func ProfilePage(w http.ResponseWriter, r *http.Request) {
+	// Получаем имя пользователя из сессии или из параметра запроса
+	username := getUsernameFromSession(r)
+
+	// Если пользователь не авторизован, перенаправляем на страницу входа
+	if username == "" {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// Получаем профиль пользователя
+	userProfile, err := GetUserProfile(username)
+	if err != nil {
+		fmt.Println("Error retrieving user profile:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	pageVariables := PageVariables{
+		Title: "Профиль пользователя",
+		User:  userProfile,
+	}
+
+	tmpl, err := template.ParseFiles("profile.html")
+	if err != nil {
+		fmt.Println("Error parsing template:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl.Execute(w, pageVariables)
 }
