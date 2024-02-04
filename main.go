@@ -4,7 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"log"
+	_ "log"
 	"net/http"
+	"strconv"
+	"time"
 
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -21,8 +25,9 @@ const (
 var db *sql.DB
 
 type PageVariables struct {
-	Title string
-	User  UserProfile
+	Title     string
+	User      UserProfile
+	Questions []Question
 }
 
 type User struct {
@@ -30,6 +35,34 @@ type User struct {
 	Password string
 	Role     string
 }
+
+type Question struct {
+	ID             int
+	Text           string
+	Author         string
+	CreatedAt      time.Time
+	AddingQuestion bool
+	Answers        []Answer
+	Category       string // Добавьте это поле
+}
+
+type Answer struct {
+	ID        int
+	Text      string
+	Author    string
+	CreatedAt time.Time
+}
+
+type QuestionWithAnswers struct {
+	ID        int
+	Text      string
+	Author    string
+	Category  string
+	CreatedAt time.Time
+	Answer    Answer
+}
+
+var goQuestions []Question
 
 func main() {
 	var err error
@@ -43,9 +76,13 @@ func main() {
 	http.HandleFunc("/register", RegisterPage)
 	http.HandleFunc("/login", LoginPage)
 	http.HandleFunc("/admin", AdminPage)
-	http.HandleFunc("/profile", ProfilePage)
+	//http.HandleFunc("/profile", ProfilePage)
+	http.HandleFunc("/go", GoPage)
+	http.HandleFunc("/java", JavaPage)
+	http.HandleFunc("/javascript", JavaScriptPage)
+	http.HandleFunc("/python", PythonPage)
 
-	fmt.Println("Server is running on :8080...")
+	log.Println("Server is running on :8080...")
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -56,7 +93,7 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.ParseFiles("index.html")
 	if err != nil {
-		fmt.Println("Error parsing template:", err)
+		log.Println("Error parsing template:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -153,7 +190,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func ProfilePage(w http.ResponseWriter, r *http.Request) {
+/*func ProfilePage(w http.ResponseWriter, r *http.Request) {
 	// Получаем имя пользователя из сессии или из параметра запроса
 	username := getUsernameFromSession(r)
 
@@ -184,4 +221,288 @@ func ProfilePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.Execute(w, pageVariables)
+}
+
+*/
+
+func GoPage(w http.ResponseWriter, r *http.Request) {
+	// Проверяем, был ли отправлен запрос на удаление вопроса
+	deleteQuestionID, err := strconv.Atoi(r.FormValue("deleteQuestionID"))
+	if err == nil && deleteQuestionID > 0 {
+		err := deleteQuestion(deleteQuestionID)
+		if err != nil {
+			fmt.Println("Error deleting question:", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if r.Method == http.MethodPost {
+		// Обработка добавления вопроса
+		text := r.FormValue("question")
+		author := getUserFromSession(r).Username
+		category := r.FormValue("category")
+		err := addQuestion(text, author, category)
+		if err != nil {
+			fmt.Println("Error adding question:", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Обработка отправки ответа
+		answerText := r.FormValue("answer")
+		questionID, err := strconv.Atoi(r.FormValue("questionID"))
+		if err == nil && questionID > 0 {
+			err := addAnswer(questionID, answerText, author)
+			if err != nil {
+				fmt.Println("Error adding answer:", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Обработка удаления ответа
+		deleteAnswerID, err := strconv.Atoi(r.FormValue("deleteAnswerID"))
+		if err == nil && deleteAnswerID > 0 {
+			err := deleteAnswer(deleteAnswerID)
+			if err != nil {
+				fmt.Println("Error deleting answer:", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Обработка редактирования ответа
+		editAnswerID, err := strconv.Atoi(r.FormValue("editAnswerID"))
+		if err == nil && editAnswerID > 0 {
+			// Здесь вы можете добавить логику для редактирования ответа
+			// Например, вызов функции editAnswer(editAnswerID, newText)
+			// Замените "newText" на актуальный текст ответа
+		}
+	}
+
+	questionsWithAnswers, err := getQuestionsWithAnswers()
+	if err != nil {
+		fmt.Println("Error getting questions with answers:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Создаем новый срез вопросов, соответствующий ожидаемому типу
+	var questions []Question
+	for _, qa := range questionsWithAnswers {
+		questions = append(questions, Question{
+			ID:        qa.ID,
+			Text:      qa.Text,
+			Author:    qa.Author,
+			Category:  qa.Category,
+			CreatedAt: qa.CreatedAt,
+			Answers:   []Answer{qa.Answer},
+		})
+	}
+
+	tmpl, err := template.ParseFiles("go.html")
+	if err != nil {
+		log.Println("Error parsing template:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	pageVariables := PageVariables{
+		Title:     "Golang Questions",
+		User:      getUserFromSession(r),
+		Questions: questions,
+	}
+
+	tmpl.Execute(w, pageVariables)
+}
+
+func JavaPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Обработка добавления вопроса
+		text := r.FormValue("question")
+		author := getUserFromSession(r).Username
+		category := r.FormValue("category") // Assuming you have a category input in your form
+		err := addQuestion(text, author, category)
+		if err != nil {
+			fmt.Println("Error adding question:", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Получаем список вопросов (может потребоваться сортировка и фильтрация)
+	// ...
+
+	// Здесь вы можете использовать шаблонизатор для отображения страницы
+	tmpl, err := template.ParseFiles("java.html")
+	if err != nil {
+		log.Println("Error parsing template:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Используйте тип UserProfile вместо User
+	userProfile := getUserFromSession(r)
+	pageVariables := PageVariables{
+		Title:     "Java Questions",
+		User:      userProfile,
+		Questions: goQuestions, // Передаем список вопросов в шаблон
+		// Добавьте сюда другие необходимые переменные
+	}
+
+	tmpl.Execute(w, pageVariables)
+}
+
+func JavaScriptPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Обработка добавления вопроса
+		text := r.FormValue("question")
+		author := getUserFromSession(r).Username
+		category := r.FormValue("category") // Assuming you have a category input in your form
+		err := addQuestion(text, author, category)
+		if err != nil {
+			log.Println("Error adding question:", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Получаем список вопросов (может потребоваться сортировка и фильтрация)
+	// ...
+
+	// Здесь вы можете использовать шаблонизатор для отображения страницы
+	tmpl, err := template.ParseFiles("js.html")
+	if err != nil {
+		log.Println("Error parsing template:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Используйте тип UserProfile вместо User
+	userProfile := getUserFromSession(r)
+	pageVariables := PageVariables{
+		Title:     "JavaScript Questions",
+		User:      userProfile,
+		Questions: goQuestions,
+	}
+
+	tmpl.Execute(w, pageVariables)
+}
+
+func PythonPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+
+		text := r.FormValue("question")
+		author := getUserFromSession(r).Username
+		category := r.FormValue("category") // Assuming you have a category input in your form
+		err := addQuestion(text, author, category)
+		if err != nil {
+			log.Println("Error adding question:", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Здесь вы можете использовать шаблонизатор для отображения страницы
+	tmpl, err := template.ParseFiles("python.html")
+	if err != nil {
+		log.Println("Error executing query:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Используйте тип UserProfile вместо User
+	userProfile := getUserFromSession(r)
+	pageVariables := PageVariables{
+		Title:     "Python Questions",
+		User:      userProfile,
+		Questions: goQuestions,
+	}
+
+	tmpl.Execute(w, pageVariables)
+}
+
+// Пример добавления логирования в функцию addQuestion
+func addQuestion(text, author, category string) error {
+	query := "INSERT INTO questions (text, author, category) VALUES ($1, $2, $3)"
+	_, err := db.Exec(query, text, author, category)
+	if err != nil {
+		log.Println("Error executing query:", err)
+	}
+	return err
+}
+
+func addAnswer(questionID int, text, author string) error {
+	_, err := db.Exec("INSERT INTO answers (question_id, text, author) VALUES ($1, $2, $3)", questionID, text, author)
+	return err
+}
+
+func getQuestions() []Question {
+	// Здесь вы можете добавить логику для получения списка вопросов из базы данных
+	// ...
+
+	// Пример запроса к базе данных для получения всех вопросов
+	rows, err := db.Query("SELECT id, text, author, created_at FROM questions ORDER BY created_at DESC")
+	if err != nil {
+		log.Println("Error executing query:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var questions []Question
+	for rows.Next() {
+		var question Question
+		err := rows.Scan(&question.ID, &question.Text, &question.Author, &question.CreatedAt)
+		if err != nil {
+			log.Println("Error executing query:", err)
+			return nil
+		}
+		questions = append(questions, question)
+	}
+
+	return questions
+}
+
+func addQuestionAndGetID(text, author string) (int, error) {
+	var questionID int
+	err := db.QueryRow("INSERT INTO questions (text, author) VALUES ($1, $2) RETURNING id", text, author).Scan(&questionID)
+	return questionID, err
+}
+
+func editAnswer(answerID int, newText string) error {
+	_, err := db.Exec("UPDATE answers SET text = $1 WHERE id = $2", newText, answerID)
+	return err
+}
+
+// deleteQuestion удаляет вопрос из базы данных
+func deleteQuestion(questionID int) error {
+	_, err := db.Exec("DELETE FROM questions WHERE id = $1", questionID)
+	return err
+}
+
+// deleteAnswer удаляет ответ из базы данных
+func deleteAnswer(answerID int) error {
+	_, err := db.Exec("DELETE FROM answers WHERE id = $1", answerID)
+	return err
+}
+
+// getQuestionsWithAnswers возвращает вопросы с соответствующими ответами
+func getQuestionsWithAnswers() ([]QuestionWithAnswers, error) {
+	rows, err := db.Query("SELECT q.id, q.text AS question_text, q.author AS question_author, q.category, q.created_at, a.id AS answer_id, a.text AS answer_text, a.author AS answer_author, a.created_at AS answer_created_at FROM questions q LEFT JOIN answers a ON q.id = a.question_id ORDER BY q.created_at DESC, a.created_at ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var questions []QuestionWithAnswers
+	for rows.Next() {
+		var q QuestionWithAnswers
+		err := rows.Scan(&q.ID, &q.Text, &q.Author, &q.Category, &q.CreatedAt, &q.Answer.ID, &q.Answer.Text, &q.Answer.Author, &q.Answer.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		questions = append(questions, q)
+	}
+	return questions, nil
 }

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Ваши мета-теги и стили -->
+    <title>{{.Title}}</title>
+</head>
+<body>
+<!-- Форма для добавления нового вопроса -->
+<form method="post">
+    <label for="question">Your Question:</label>
+    <textarea id="question" name="question" rows="4" cols="50"></textarea>
+    <br>
+    <input type="submit" value="Ask Question">
+</form>
+
+<!-- Список вопросов и ответов -->
+{{range .Questions}}
+<div>
+    <p>{{.Text}}</p>
+    <p>Author: {{.Author}}, Timestamp: {{.Timestamp}}</p>
+    <!-- Добавьте здесь ответы, если нужно -->
+</div>
+<hr>
+{{end}}
+
+<!-- Добавьте кнопки сортировки и фильтрации -->
+<button onclick="sortByTime()">Sort by Time</button>
+<button onclick="applyFilter()">Apply Filter</button>
+
+<!-- Ваши скрипты и стили -->
+</body>
+</html>

@@ -34,14 +34,19 @@ func UpdateUserProfile(username, newRole string) error {
 }
 
 // getUsernameFromSession возвращает имя пользователя из сессии
-func getUsernameFromSession(r *http.Request) string {
-	// Здесь можно добавить логику получения имени пользователя из сессии.
-	// В данном примере, это просто заглушка. Мы предполагаем, что имя пользователя хранится в куках.
+// getUserFromSession возвращает профиль пользователя из сессии по имени
+func getUserFromSession(r *http.Request) UserProfile {
+	// Здесь вы можете добавить логику получения профиля пользователя из сессии.
+	// В данном примере предполагается, что имя пользователя хранится в куках.
 
 	cookie, err := r.Cookie("username")
 	if err != nil {
-		return ""
+		return UserProfile{} // Возвращаем пустой профиль, если имя пользователя не найдено
 	}
 
-	return cookie.Value
+	// Создаем и возвращаем профиль пользователя с именем из сессии
+	return UserProfile{
+		Username: cookie.Value,
+		// Добавьте другие поля профиля пользователя, если они есть
+	}
 }
