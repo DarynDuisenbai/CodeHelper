@@ -7,9 +7,12 @@ import (
 	"log"
 	_ "log"
 	"net/http"
+	"sort"
 	"strconv"
+	"sync"
 	"time"
 
+	"github.com/juju/ratelimit"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -86,6 +89,20 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
+// ratelimiting
+var limiter = ratelimit.NewBucket(time.Second, 10)
+var mutex sync.Mutex
+
+func RateLimitedHandler(w http.ResponseWriter, r *http.Request) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if limiter.TakeAvailable(1) < 1 {
+		http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+		return
+	}
+
+}
 func HomePage(w http.ResponseWriter, r *http.Request) {
 	pageVariables := PageVariables{
 		Title: "Ваш форум",
@@ -505,4 +522,15 @@ func getQuestionsWithAnswers() ([]QuestionWithAnswers, error) {
 		questions = append(questions, q)
 	}
 	return questions, nil
+}
+
+// Sorting
+type ByID []Question
+
+func (a ByID) Len() int           { return len(a) }
+func (a ByID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByID) Less(i, j int) bool { return a[i].ID < a[j].ID }
+
+func SortQuestionsByID(questions []Question) {
+	sort.Sort(ByID(questions))
 }
